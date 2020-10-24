@@ -1,21 +1,18 @@
-FROM python:3.9.0-buster
+FROM python:3.9.0-alpine
 MAINTAINER kiarash3012
 
 ENV PYTHONUNBUFFERED 1
 
 COPY ./requirements.txt /requirements.txt
+RUN apk add --update --no-cache postgresql-client
+RUN apk add --update --no-cache --virtual .tmp-build-deps \
+    gcc libc-dev linux-headers postgresql-dev
 RUN pip install -r /requirements.txt
+RUN apk del .tmp-build-deps
 
 RUN mkdir /app
 WORKDIR /app
 COPY ./app /app
 
-# Create a nonroot user, and switch to it
-RUN /usr/sbin/useradd --create-home --home-dir /usr/local/djangoadmin --shell /bin/bash djangoadmin
-RUN /usr/sbin/adduser djangoadmin sudo
-RUN chown -R djangoadmin /usr/local/
-RUN chown -R djangoadmin /usr/lib/
-RUN chown -R djangoadmin /usr/bin/
-RUN chown -R djangoadmin /app
-
-RUN /bin/su djangoadmin
+RUN adduser -D djangoadmin
+USER djangoadmin
